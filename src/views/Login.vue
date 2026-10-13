@@ -5,7 +5,7 @@
             <h2>欢迎来到VueAdmin管理系统</h2>
             <el-image
                   style="width: 180px; height: 180px"
-                  :src="require('@/assets/title.jpg')"
+                  :src="titleImage"
             ></el-image>
             <p>
                公众号 MarkerHub
@@ -38,16 +38,20 @@
       </el-col>
    </el-row>
 </template>
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+import type { FormInstance } from 'element-plus'
    import qs from 'qs'
-   export default {
+import titleImage from '@/assets/title.jpg'
+   export default defineComponent({
       name: "Login",
       data() {
          return {
+            titleImage,
             loginForm: {
                username: 'admin',
-               password: 'markerhub',
-               code: '11111',
+               password: '',
+               code: '',
                token: '',
             },
             rules: {
@@ -66,12 +70,13 @@
          }
       },
       methods: {
-         submitForm(formName) {
-            this.$refs[formName].validate((valid) => {
+         submitForm(formName: string) {
+            ;(this.$refs[formName] as FormInstance).validate((valid) => {
                if (valid) {
-                  this.$axios.post('/login?' + qs.stringify(this.loginForm)).then(res => {
+                  this.$axios.post('/login', qs.stringify(this.loginForm), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).then(res => {
                      console.log(res.data)
-                     const jwt = res.headers['authorization']
+                     const jwt = res.headers['authorization'] || res.data.data?.token
+                     if (!jwt) throw new Error('登录接口未返回令牌')
                      // 将jwt存储到应用store中
                      this.$store.commit("SET_TOKEN", jwt)
                      this.$router.push("/index")
@@ -82,12 +87,12 @@
                } else {
                   this.getCaptcha();
                   console.log('error submit!!');
-                  return false;
+                  return;
                }
             });
          },
-         resetForm(formName) {
-            this.$refs[formName].resetFields();
+         resetForm(formName: string) {
+            ;(this.$refs[formName] as FormInstance).resetFields();
          },
          getPass() {
             this.$message("请扫描左边的二维码，回复【VueAdmin】获取登录密码");
@@ -102,7 +107,7 @@
       created() {
          this.getCaptcha()
       }
-   }
+   })
 </script>
 <style scoped>
    .el-col {

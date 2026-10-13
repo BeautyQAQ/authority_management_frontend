@@ -1,8 +1,15 @@
-const Mock = require('mockjs')
+import AxiosMockAdapter from 'axios-mock-adapter'
+import request from './axios'
 
-const Random = Mock.Random
+const adapter = new AxiosMockAdapter(request, { delayResponse: 100 })
+const Mock = {
+  mock(pattern: string | RegExp, method: 'get' | 'post', responder: () => unknown) {
+    const handler = method === 'get' ? adapter.onGet(pattern) : adapter.onPost(pattern)
+    handler.reply(() => [200, structuredClone(responder())])
+  }
+}
 
-let Result = {
+const Result: { code: number; msg: string; data: unknown } = {
 	code: 200,
 	msg: '操作成功',
 	data: null
@@ -11,15 +18,16 @@ let Result = {
 Mock.mock('/captcha', 'get', () => {
 
 	Result.data = {
-		token: Random.string(32),
-		captchaImg: Random.dataImage('120x40', 'p7n5w')
+		token: crypto.randomUUID(),
+		captchaImg: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><rect width="120" height="40" fill="#eee"/><text x="18" y="28" font-size="24">p7n5w</text></svg>')
 	}
 	return Result
 })
 
 Mock.mock('/login', 'post', () => {
 
-	// 无法在header中传入数jwt
+	Result.data = { token: 'mock-demo-token' }
+	// Mock 登录返回演示 token
 
 	// Result.code = 400
 	// Result.msg = "验证码错误"
@@ -465,8 +473,8 @@ Mock.mock(RegExp('/sys/user/info/*'), 'get', () => {
 })
 
 // 因为mock不认识/login?username=xxx，所以用了正则表达式
-Mock.mock(RegExp('/login*'), 'post', (config) => {
+Mock.mock(RegExp('/login*'), 'post', () => {
     // 这里无法在header添加authorization，直接跳过
     console.log("mock----------------login")
-    return Result
+    return { code: 200, msg: '演示登录', data: { token: 'mock-demo-token' } }
  })

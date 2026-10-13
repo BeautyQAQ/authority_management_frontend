@@ -11,18 +11,18 @@
 
 				<div class="header-avatar">
 
-					<el-avatar size="medium" :src="userInfo.avatar"></el-avatar>
+					<el-avatar size="default" :src="userInfo.avatar"></el-avatar>
 
 					<el-dropdown>
 						<span class="el-dropdown-link">
-						{{userInfo.username}}<i class="el-icon-arrow-down el-icon--right"></i>
+						{{userInfo.username}}<el-icon><ArrowDown /></el-icon>
 						</span>
-						<el-dropdown-menu slot="dropdown">
+						<template #dropdown><el-dropdown-menu>
 							<el-dropdown-item>
 								<router-link :to="{name: 'UserCenter'}">个人中心</router-link>
 							</el-dropdown-item>
-							<el-dropdown-item @click.native="logout">退出</el-dropdown-item>
-						</el-dropdown-menu>
+							<el-dropdown-item @click="logout">退出</el-dropdown-item>
+						</el-dropdown-menu></template>
 					</el-dropdown>
 
 					<el-link href="https://markerhub.com" target="_blank">网站</el-link>
@@ -40,15 +40,17 @@
 	</el-container>
 </template>
 
-<script>
-	import SideMenu from "./inc/SideMenu";
-	// import Tabs from "./inc/Tabs";
+<script lang="ts">
+import { ArrowDown } from '@element-plus/icons-vue'
+import { defineComponent } from 'vue'
+	import SideMenu from "./inc/SideMenu.vue";
+	import Tabs from "./inc/Tabs.vue";
+import { resetRoutes } from "@/router";
 
-	export default {
+	export default defineComponent({
 		name: "Home",
 		components: {
-			SideMenu
-            // , Tabs
+			SideMenu, Tabs, ArrowDown
 		},
 		data() {
 			return {
@@ -70,8 +72,8 @@
 			},
 			logout() {
 				this.$axios.post("/logout").then(res => {
-					localStorage.clear()
-					sessionStorage.clear()
+					this.$store.commit("SET_TOKEN", "")
+                    resetRoutes()
 
 					this.$store.commit("resetState")
 
@@ -79,7 +81,7 @@
 				})
 			}
 		}
-	}
+	})
 </script>
 
 <style scoped>

@@ -18,8 +18,8 @@
 				<el-button type="primary" @click="dialogVisible = true">新增</el-button>
 			</el-form-item>
 			<el-form-item>
-				<el-popconfirm title="这是确定批量删除吗？" @confirm="delHandle(null)">
-					<el-button type="danger" slot="reference" :disabled="delBtlStatu">批量删除</el-button>
+				<el-popconfirm title="这是确定批量删除吗？" @confirm="delHandle()">
+					<template #reference><el-button type="danger" :disabled="delBtlStatu">批量删除</el-button></template>
 				</el-popconfirm>
 			</el-form-item>
 		</el-form>
@@ -57,7 +57,7 @@
 			<el-table-column
 					prop="statu"
 					label="状态">
-				<template slot-scope="scope">
+				<template #default="scope">
 					<el-tag size="small" v-if="scope.row.statu === 1" type="success">正常</el-tag>
 					<el-tag size="small" v-else-if="scope.row.statu === 0" type="danger">禁用</el-tag>
 				</template>
@@ -67,18 +67,18 @@
 					prop="icon"
 					label="操作">
 
-				<template slot-scope="scope">
-					<el-button type="text" @click="permHandle(scope.row.id)">分配权限</el-button>
+				<template #default="scope">
+					<el-button link type="primary" @click="permHandle(scope.row.id)">分配权限</el-button>
 					<el-divider direction="vertical"></el-divider>
 
-					<el-button type="text" @click="editHandle(scope.row.id)">编辑</el-button>
+					<el-button link type="primary" @click="editHandle(scope.row.id)">编辑</el-button>
 					<el-divider direction="vertical"></el-divider>
 
-					<template>
+
 						<el-popconfirm title="这是一段内容确定删除吗？" @confirm="delHandle(scope.row.id)">
-							<el-button type="text" slot="reference">删除</el-button>
+							<template #reference><el-button link type="primary">删除</el-button></template>
 						</el-popconfirm>
-					</template>
+
 
 				</template>
 			</el-table-column>
@@ -100,7 +100,7 @@
 		<!--新增对话框-->
 		<el-dialog
 				title="提示"
-				:visible.sync="dialogVisible"
+				v-model="dialogVisible"
 				width="600px"
 				:before-close="handleClose">
 
@@ -121,8 +121,8 @@
 
 				<el-form-item label="状态" prop="statu" label-width="100px">
 					<el-radio-group v-model="editForm.statu">
-						<el-radio :label=0>禁用</el-radio>
-						<el-radio :label=1>正常</el-radio>
+						<el-radio :value=0>禁用</el-radio>
+						<el-radio :value=1>正常</el-radio>
 					</el-radio-group>
 				</el-form-item>
 
@@ -136,7 +136,7 @@
 
 		<el-dialog
 				title="分配权限"
-				:visible.sync="permDialogVisible"
+				v-model="permDialogVisible"
 				width="600px">
 
 			<el-form :model="permForm">
@@ -153,22 +153,26 @@
 
 			</el-form>
 
-			<span slot="footer" class="dialog-footer">
+			<template #footer><span class="dialog-footer">
 			    <el-button @click="permDialogVisible = false">取 消</el-button>
 			    <el-button type="primary" @click="submitPermFormHandle('permForm')">确 定</el-button>
-			</span>
+			</span></template>
 
 		</el-dialog>
 
 	</div>
 </template>
 
-<script>
-	export default {
+<script lang="ts">
+import type { SysMenu, SysRole, SysUser } from '@/types'
+import type { TableInstance, TreeInstance } from 'element-plus'
+import { defineComponent } from 'vue'
+import type { FormInstance } from 'element-plus'
+	export default defineComponent({
 		name: "Role",
 		data() {
 			return {
-				searchForm: {},
+				searchForm: { name: '', username: '' },
 				delBtlStatu: true,
 
 				total: 0,
@@ -176,11 +180,9 @@
 				current: 1,
 
 				dialogVisible: false,
-				editForm: {
+				editForm: {} as Partial<SysRole>,
 
-				},
-
-				tableData: [],
+				tableData: [] as SysRole[],
 
 				editFormRules: {
 					name: [
@@ -194,15 +196,15 @@
 					]
 				},
 
-				multipleSelection: [],
+				multipleSelection: [] as SysRole[],
 
 				permDialogVisible: false,
-				permForm: {},
+				permForm: {} as Partial<SysRole>,
 				defaultProps: {
 					children: 'children',
 					label: 'name'
 				},
-				permTreeData: []
+				permTreeData: [] as SysMenu[]
 			}
 		},
 		created() {
@@ -213,16 +215,16 @@
 			})
 		},
 		methods: {
-			toggleSelection(rows) {
+			toggleSelection(rows?: SysRole[]) {
 				if (rows) {
 					rows.forEach(row => {
-						this.$refs.multipleTable.toggleRowSelection(row);
+						;(this.$refs.multipleTable as TableInstance).toggleRowSelection(row);
 					});
 				} else {
-					this.$refs.multipleTable.clearSelection();
+					;(this.$refs.multipleTable as TableInstance).clearSelection();
 				}
 			},
-			handleSelectionChange(val) {
+			handleSelectionChange(val: SysRole[]) {
 				console.log("勾选")
 				console.log(val)
 				this.multipleSelection = val;
@@ -230,19 +232,19 @@
 				this.delBtlStatu = val.length == 0
 			},
 
-			handleSizeChange(val) {
+			handleSizeChange(val: number) {
 				console.log(`每页 ${val} 条`);
 				this.size = val
 				this.getRoleList()
 			},
-			handleCurrentChange(val) {
+			handleCurrentChange(val: number) {
 				console.log(`当前页: ${val}`);
 				this.current = val
 				this.getRoleList()
 			},
 
-			resetForm(formName) {
-				this.$refs[formName].resetFields();
+			resetForm(formName: string) {
+				;(this.$refs[formName] as FormInstance).resetFields();
 				this.dialogVisible = false
 				this.editForm = {}
 			},
@@ -265,8 +267,8 @@
 				})
 			},
 
-			submitForm(formName) {
-				this.$refs[formName].validate((valid) => {
+			submitForm(formName: string) {
+				;(this.$refs[formName] as FormInstance).validate((valid) => {
 					if (valid) {
 						this.$axios.post('/sys/role/' + (this.editForm.id?'update' : 'save'), this.editForm)
 							.then(res => {
@@ -285,20 +287,20 @@
 							})
 					} else {
 						console.log('error submit!!');
-						return false;
+						return;
 					}
 				});
 			},
-			editHandle(id) {
+			editHandle(id: number) {
 				this.$axios.get('/sys/role/info/' + id).then(res => {
 					this.editForm = res.data.data
 
 					this.dialogVisible = true
 				})
 			},
-			delHandle(id) {
+			delHandle(id?: number) {
 
-				var ids = []
+				const ids: number[] = []
 
 				if (id) {
 					ids.push(id)
@@ -321,18 +323,18 @@
 					});
 				})
 			},
-			permHandle(id) {
+			permHandle(id: number) {
 				this.permDialogVisible = true
 
 				this.$axios.get("/sys/role/info/" + id).then(res => {
 
-					this.$refs.permTree.setCheckedKeys(res.data.data.menuIds)
+					;(this.$refs.permTree as TreeInstance).setCheckedKeys(res.data.data.menuIds)
 					this.permForm = res.data.data
 				})
 			},
 
-			submitPermFormHandle(formName) {
-				var menuIds = this.$refs.permTree.getCheckedKeys()
+			submitPermFormHandle(formName: string) {
+				var menuIds = (this.$refs.permTree as TreeInstance).getCheckedKeys()
 
 				console.log(menuIds)
 
@@ -350,7 +352,7 @@
 				})
 			}
 		}
-	}
+	})
 </script>
 
 <style scoped>

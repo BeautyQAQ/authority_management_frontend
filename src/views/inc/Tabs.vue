@@ -11,8 +11,11 @@
 	</el-tabs>
 </template>
 
-<script>
-	export default {
+<script lang="ts">
+import type { Tab } from '@/store/modules/menus'
+import type { TabsPaneContext } from 'element-plus'
+import { defineComponent } from 'vue'
+	export default defineComponent({
 		name: "Tabs",
 		data() {
 			return {
@@ -25,7 +28,7 @@
 				get() {
 					return this.$store.state.menus.editableTabs
 				},
-				set(val) {
+				set(val: Tab[]) {
 					this.$store.state.menus.editableTabs = val
 				}
 			},
@@ -33,18 +36,18 @@
 				get() {
 					return this.$store.state.menus.editableTabsValue
 				},
-				set(val) {
+				set(val: string) {
 					this.$store.state.menus.editableTabsValue = val
 				}
 			}
 		},
 		methods: {
 
-			removeTab(targetName) {
+			removeTab(targetName: string | number) {
 				let tabs = this.editableTabs;
 				let activeName = this.editableTabsValue;
 
-				if (activeName === 'Index') {
+				if (targetName === 'Index') {
 					return
 				}
 
@@ -65,11 +68,11 @@
 				this.$router.push({name: activeName})
 
 			},
-			clickTab (target) {
-				this.$router.push({name: target.name})
+			clickTab (target: TabsPaneContext) {
+				this.$router.push({name: String(target.paneName)})
 			}
 		}
-	}
+	})
 </script>
 
 <style scoped>

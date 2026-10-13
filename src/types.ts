@@ -1,0 +1,3 @@
+export interface SysMenu { id: number; parentId: number; name: string; perms: string; icon: string; path: string; component: string; type: number; statu: number; orderNum: number; children: SysMenu[] }
+export interface SysRole { id: number; name: string; code: string; remark: string; statu: number; menuIds: number[] }
+export interface SysUser { id: number; username: string; email: string; phone: string; statu: number; avatar: string; roles: SysRole[] }

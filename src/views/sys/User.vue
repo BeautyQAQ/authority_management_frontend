@@ -18,8 +18,8 @@
 				<el-button type="primary" @click="dialogVisible = true" v-if="hasAuth('sys:user:save')">新增</el-button>
 			</el-form-item>
 			<el-form-item>
-				<el-popconfirm title="这是确定批量删除吗？" @confirm="delHandle(null)">
-					<el-button type="danger" slot="reference" :disabled="delBtlStatu" v-if="hasAuth('sys:user:delete')">批量删除</el-button>
+				<el-popconfirm title="这是确定批量删除吗？" @confirm="delHandle()">
+					<template #reference><el-button type="danger" :disabled="delBtlStatu" v-if="hasAuth('sys:user:delete')">批量删除</el-button></template>
 				</el-popconfirm>
 			</el-form-item>
 		</el-form>
@@ -41,7 +41,7 @@
 			<el-table-column
 					label="头像"
 					width="50">
-				<template slot-scope="scope">
+				<template #default="scope">
 					<el-avatar size="small" :src="scope.row.avatar"></el-avatar>
 				</template>
 			</el-table-column>
@@ -54,7 +54,7 @@
 			<el-table-column
 					prop="code"
 					label="角色名称">
-				<template slot-scope="scope">
+				<template #default="scope">
 					<el-tag size="small" type="info" v-for="(item,index) in scope.row.sysRoles" :key="index">{{item.name}}</el-tag>
 				</template>
 
@@ -71,7 +71,7 @@
 			<el-table-column
 					prop="statu"
 					label="状态">
-				<template slot-scope="scope">
+				<template #default="scope">
 					<el-tag size="small" v-if="scope.row.statu === 1" type="success">正常</el-tag>
 					<el-tag size="small" v-else-if="scope.row.statu === 0" type="danger">禁用</el-tag>
 				</template>
@@ -88,21 +88,21 @@
 					width="260px"
 					label="操作">
 
-				<template slot-scope="scope">
-					<el-button type="text" @click="roleHandle(scope.row.id)">分配角色</el-button>
+				<template #default="scope">
+					<el-button link type="primary" @click="roleHandle(scope.row.id)">分配角色</el-button>
 					<el-divider direction="vertical"></el-divider>
 
-					<el-button type="text" @click="repassHandle(scope.row.id, scope.row.username)">重置密码</el-button>
+					<el-button link type="primary" @click="repassHandle(scope.row.id, scope.row.username)">重置密码</el-button>
 					<el-divider direction="vertical"></el-divider>
 
-					<el-button type="text" @click="editHandle(scope.row.id)">编辑</el-button>
+					<el-button link type="primary" @click="editHandle(scope.row.id)">编辑</el-button>
 					<el-divider direction="vertical"></el-divider>
 
-					<template>
+
 						<el-popconfirm title="这是一段内容确定删除吗？" @confirm="delHandle(scope.row.id)">
-							<el-button type="text" slot="reference">删除</el-button>
+							<template #reference><el-button link type="primary">删除</el-button></template>
 						</el-popconfirm>
-					</template>
+
 
 				</template>
 			</el-table-column>
@@ -123,7 +123,7 @@
 		<!--新增对话框-->
 		<el-dialog
 				title="提示"
-				:visible.sync="dialogVisible"
+				v-model="dialogVisible"
 				width="600px"
 				:before-close="handleClose">
 
@@ -147,20 +147,20 @@
 
 				<el-form-item label="状态"  prop="statu" label-width="100px">
 					<el-radio-group v-model="editForm.statu">
-						<el-radio :label="0">禁用</el-radio>
-						<el-radio :label="1">正常</el-radio>
+						<el-radio :value="0">禁用</el-radio>
+						<el-radio :value="1">正常</el-radio>
 					</el-radio-group>
 				</el-form-item>
 
 			</el-form>
-			<div slot="footer" class="dialog-footer">
+			<template #footer><div class="dialog-footer">
 				<el-button @click="resetForm('editForm')">取 消</el-button>
 				<el-button type="primary" @click="submitForm('editForm')">确 定</el-button>
-			</div>
+			</div></template>
 		</el-dialog>
 
 		<!-- 分配权限对话框 -->
-		<el-dialog title="分配角色" :visible.sync="roleDialogFormVisible" width="600px">
+		<el-dialog title="分配角色" v-model="roleDialogFormVisible" width="600px">
 
 			<el-form :model="roleForm">
 				<el-tree
@@ -174,21 +174,25 @@
 				</el-tree>
 			</el-form>
 
-			<div slot="footer" class="dialog-footer">
+			<template #footer><div class="dialog-footer">
 				<el-button @click="roleDialogFormVisible=false">取 消</el-button>
 				<el-button type="primary" @click="submitRoleHandle('roleForm')">确 定</el-button>
-			</div>
+			</div></template>
 		</el-dialog>
 
 	</div>
 </template>
 
-<script>
-	export default {
+<script lang="ts">
+import type { SysMenu, SysRole, SysUser } from '@/types'
+import type { TableInstance, TreeInstance } from 'element-plus'
+import { defineComponent } from 'vue'
+import type { FormInstance } from 'element-plus'
+	export default defineComponent({
 		name: "Role",
 		data() {
 			return {
-				searchForm: {},
+				searchForm: { name: '', username: '' },
 				delBtlStatu: true,
 
 				total: 0,
@@ -196,11 +200,9 @@
 				current: 1,
 
 				dialogVisible: false,
-				editForm: {
+				editForm: {} as Partial<SysUser>,
 
-				},
-
-				tableData: [],
+				tableData: [] as SysUser[],
 
 				editFormRules: {
 					username: [
@@ -214,16 +216,16 @@
 					]
 				},
 
-				multipleSelection: [],
+				multipleSelection: [] as SysUser[],
 
 				roleDialogFormVisible: false,
 				defaultProps: {
 					children: 'children',
 					label: 'name'
 				},
-				roleForm: {},
-				roleTreeData:  [],
-				treeCheckedKeys: [],
+				roleForm: {} as Partial<SysUser>,
+				roleTreeData: [] as SysRole[],
+				treeCheckedKeys: [] as number[],
 				checkStrictly: true
 
 			}
@@ -236,16 +238,16 @@
 			})
 		},
 		methods: {
-			toggleSelection(rows) {
+			toggleSelection(rows?: SysUser[]) {
 				if (rows) {
 					rows.forEach(row => {
-						this.$refs.multipleTable.toggleRowSelection(row);
+						;(this.$refs.multipleTable as TableInstance).toggleRowSelection(row);
 					});
 				} else {
-					this.$refs.multipleTable.clearSelection();
+					;(this.$refs.multipleTable as TableInstance).clearSelection();
 				}
 			},
-			handleSelectionChange(val) {
+			handleSelectionChange(val: SysUser[]) {
 				console.log("勾选")
 				console.log(val)
 				this.multipleSelection = val;
@@ -253,19 +255,19 @@
 				this.delBtlStatu = val.length == 0
 			},
 
-			handleSizeChange(val) {
+			handleSizeChange(val: number) {
 				console.log(`每页 ${val} 条`);
 				this.size = val
 				this.getUserList()
 			},
-			handleCurrentChange(val) {
+			handleCurrentChange(val: number) {
 				console.log(`当前页: ${val}`);
 				this.current = val
 				this.getUserList()
 			},
 
-			resetForm(formName) {
-				this.$refs[formName].resetFields();
+			resetForm(formName: string) {
+				;(this.$refs[formName] as FormInstance).resetFields();
 				this.dialogVisible = false
 				this.editForm = {}
 			},
@@ -288,8 +290,8 @@
 				})
 			},
 
-			submitForm(formName) {
-				this.$refs[formName].validate((valid) => {
+			submitForm(formName: string) {
+				;(this.$refs[formName] as FormInstance).validate((valid) => {
 					if (valid) {
 						this.$axios.post('/sys/user/' + (this.editForm.id?'update' : 'save'), this.editForm)
 							.then(res => {
@@ -307,20 +309,20 @@
 							})
 					} else {
 						console.log('error submit!!');
-						return false;
+						return;
 					}
 				});
 			},
-			editHandle(id) {
+			editHandle(id: number) {
 				this.$axios.get('/sys/user/info/' + id).then(res => {
 					this.editForm = res.data.data
 
 					this.dialogVisible = true
 				})
 			},
-			delHandle(id) {
+			delHandle(id?: number) {
 
-				var ids = []
+				const ids: number[] = []
 
 				if (id) {
 					ids.push(id)
@@ -344,22 +346,22 @@
 				})
 			},
 
-			roleHandle (id) {
+			roleHandle(id: number) {
 				this.roleDialogFormVisible = true
 
 				this.$axios.get('/sys/user/info/' + id).then(res => {
-					this.roleForm = res.data.data
+					this.roleForm = res.data.data;
 
-					let roleIds = []
-					res.data.data.sysRoles.forEach(row => {
+					const roleIds: number[] = [];
+					(res.data.data.roles || []).forEach((row: SysRole) => {
 						roleIds.push(row.id)
 					})
 
-					this.$refs.roleTree.setCheckedKeys(roleIds)
+					;(this.$refs.roleTree as TreeInstance).setCheckedKeys(roleIds)
 				})
 			},
-			submitRoleHandle(formName) {
-				var roleIds = this.$refs.roleTree.getCheckedKeys()
+			submitRoleHandle(formName: string) {
+				var roleIds = (this.$refs.roleTree as TreeInstance).getCheckedKeys()
 
 				console.log(roleIds)
 
@@ -376,7 +378,7 @@
 					this.roleDialogFormVisible = false
 				})
 			},
-			repassHandle(id, username) {
+			repassHandle(id: number, username: string) {
 
 				this.$confirm('将重置用户【' + username + '】的密码, 是否继续?', '提示', {
 					confirmButtonText: '确定',
@@ -395,7 +397,7 @@
 				})
 			}
 		}
-	}
+	})
 </script>
 
 <style scoped>

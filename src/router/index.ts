@@ -40,6 +40,7 @@ router.beforeEach(async to => {
       return '/login'
     }
   }
+  if (!to.matched.length) return '/index'
   return true
 })
 router.afterEach(to => {

@@ -1,132 +1,66 @@
 <template>
-   <el-row type="flex" class="row-bg" justify="center">
-      <el-col :xl="6" :lg="7">
-         <div class="login-form">
-            <h2>欢迎来到VueAdmin管理系统</h2>
-            <el-image
-                  style="width: 180px; height: 180px"
-                  :src="titleImage"
-            ></el-image>
-            <p>
-               公众号 MarkerHub
-            </p>
-            <p>
-               扫码二维码，回复【VueAdmin】获取登录密码
-            </p>
-         </div>
-      </el-col>
-      <el-col :span="1">
-         <el-divider direction="vertical"></el-divider>
-      </el-col>
-      <el-col :xl="6" :lg="7">
-         <el-form label-position="right" :rules="rules" label-width="80px" :model="loginForm" ref="loginForm">
-            <el-form-item label="用户名" prop="username" style="width: 380px;">
-               <el-input v-model="loginForm.username"></el-input>
-            </el-form-item>
-            <el-form-item label="密码" prop="password" style="width: 380px;">
-               <el-input type="password" v-model="loginForm.password"></el-input>
-            </el-form-item>
-            <el-form-item label="验证码" prop="code" style="width: 380px;">
-               <el-input v-model="loginForm.code" style="width: 172px; float: left;" maxlength="5"></el-input>
-               <el-image class="captchaImg" :src="captchaImg" @click="getCaptcha"></el-image>
-            </el-form-item>
-            <el-form-item>
-               <el-button type="primary" @click="submitForm('loginForm')">提交</el-button>
-               <el-button @click="getPass">获取密码</el-button>
-            </el-form-item>
-         </el-form>
-      </el-col>
-   </el-row>
+  <main class="login-page">
+    <section class="login-panel">
+      <p class="eyebrow">流沙社区</p>
+      <h1>登录管理后台</h1>
+      <p class="hint">使用管理员分配的账号登录。</p>
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="login">
+        <el-form-item label="用户名" prop="username"><el-input v-model="form.username" autocomplete="username" maxlength="64" /></el-form-item>
+        <el-form-item label="密码" prop="password"><el-input v-model="form.password" type="password" show-password autocomplete="current-password" /></el-form-item>
+        <el-form-item label="验证码" prop="code">
+          <div class="captcha-row">
+            <el-input v-model="form.code" autocomplete="off" maxlength="5" />
+            <button type="button" class="captcha" aria-label="刷新验证码" @click="getCaptcha">
+              <img v-if="captchaImg" :src="captchaImg" alt="登录验证码，点击刷新" /><span v-else>刷新验证码</span>
+            </button>
+          </div>
+        </el-form-item>
+        <el-button type="primary" native-type="submit" :loading="busy" class="submit">登录</el-button>
+      </el-form>
+    </section>
+  </main>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue'
-import type { FormInstance } from 'element-plus'
-   import qs from 'qs'
-import titleImage from '@/assets/title.jpg'
-   export default defineComponent({
-      name: "Login",
-      data() {
-         return {
-            titleImage,
-            loginForm: {
-               username: 'admin',
-               password: '',
-               code: '',
-               token: '',
-            },
-            rules: {
-               username: [
-                  {required: true, message: '请输入用户名', trigger: 'blur'}
-               ],
-               password: [
-                  {required: true, message: '请输入密码', trigger: 'blur'}
-               ],
-               code: [
-                  {required: true, message: '请输入验证码', trigger: 'blur'},
-                  {min: 5, max: 5, message: '验证码为5个字符', trigger: 'blur'}
-               ],
-            },
-            captchaImg: ''
-         }
-      },
-      methods: {
-         submitForm(formName: string) {
-            ;(this.$refs[formName] as FormInstance).validate((valid) => {
-               if (valid) {
-                  this.$axios.post('/login', qs.stringify(this.loginForm), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).then(res => {
-                     console.log(res.data)
-                     const jwt = res.headers['authorization'] || res.data.data?.token
-                     if (!jwt) throw new Error('登录接口未返回令牌')
-                     // 将jwt存储到应用store中
-                     this.$store.commit("SET_TOKEN", jwt)
-                     this.$router.push("/index")
-                  }).catch(error => {
-                     this.getCaptcha();
-                     console.log('error submit!!');
-                  })
-               } else {
-                  this.getCaptcha();
-                  console.log('error submit!!');
-                  return;
-               }
-            });
-         },
-         resetForm(formName: string) {
-            ;(this.$refs[formName] as FormInstance).resetFields();
-         },
-         getPass() {
-            this.$message("请扫描左边的二维码，回复【VueAdmin】获取登录密码");
-         },
-         getCaptcha() {
-            this.$axios.get('/captcha').then(res => {
-               this.loginForm.token = res.data.data.token
-               this.captchaImg = res.data.data.captchaImg
-            })
-         }
-      },
-      created() {
-         this.getCaptcha()
-      }
-   })
+<script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { type FormInstance, type FormRules } from 'element-plus'
+import request from '@/axios'
+import store from '@/store'
+import router, { resetRoutes } from '@/router'
+import type { ApiResult } from '@/types'
+const formRef = ref<FormInstance>(), busy = ref(false), captchaImg = ref('')
+const form = reactive({ username: 'admin', password: '', code: '', token: '' })
+const rules: FormRules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  code: [{ required: true, len: 5, message: '请输入 5 位验证码', trigger: 'blur' }]
+}
+async function getCaptcha() {
+  form.code = ''; form.token = ''; captchaImg.value = ''
+  try {
+    const { data } = await request.get<ApiResult<{ token: string; captchaImg: string }>>('/captcha')
+    form.token = data.data.token; captchaImg.value = data.data.captchaImg
+  } catch { /* Displayed by the HTTP layer. */ }
+}
+async function login() {
+  if (busy.value || !await formRef.value?.validate().catch(() => false)) return
+  busy.value = true
+  try {
+    const { data } = await request.post<ApiResult<{ token: string }>>('/login', new URLSearchParams(form))
+    store.commit('resetState'); resetRoutes(); store.commit('SET_TOKEN', data.data.token)
+    await router.replace('/index')
+  } catch { await getCaptcha() }
+  finally { busy.value = false }
+}
+onMounted(getCaptcha)
 </script>
 <style scoped>
-   .el-col {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-      text-align: center;
-   }
-   .el-row {
-      height: 100%;
-      background-color: #fafafa;
-   }
-   .el-divider {
-      height: 200px;
-   }
-   .captchaImg {
-      float: left;
-      margin-left: 8px;
-      border-radius: 4px;
-   }
+.login-page { min-height: 100vh; display: grid; place-items: center; background: #f1f5f8; padding: 24px; box-sizing: border-box; }
+.login-panel { width: 100%; max-width: 380px; padding: 36px; background: white; border-radius: 16px; box-shadow: 0 12px 40px #20364c12; }
+h1 { font-size: 26px; margin: 8px 0; color: #243449; }
+.eyebrow { color: #11897c; font-weight: 600; margin: 0; }
+.hint { color: #68798b; margin-bottom: 28px; }
+.captcha-row { display: flex; gap: 12px; width: 100%; }
+.captcha { padding: 0; background: #f6f7f8; border: 1px solid #dcdfe6; border-radius: 4px; cursor: pointer; min-width: 120px; }
+.captcha img { display: block; width: 120px; height: 40px; }
+.submit { width: 100%; margin-top: 8px; }
 </style>

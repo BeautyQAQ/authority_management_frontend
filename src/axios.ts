@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { clearSession } from './session'
 const request = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || '/api', timeout: 10000 })
 request.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
@@ -12,7 +13,7 @@ request.interceptors.response.use(response => {
   ElMessage.error(message)
   return Promise.reject(new Error(message))
 }, error => {
-  if (error.response?.status === 401) localStorage.removeItem('token')
+  if (error.response?.status === 401 && error.config?.url !== '/login') void clearSession()
   ElMessage.error(error.response?.data?.msg || error.message || '网络连接失败')
   return Promise.reject(error)
 })

@@ -106,7 +106,7 @@ Mock.mock('/sys/menu/nav', 'get', () => {
 		}
 	]
 
-	let authoritys = ['sys:user:list', "sys:user:save", "sys:user:delete"]
+	const authoritys = ['ROLE_ADMIN', ...['user', 'role', 'menu'].flatMap(resource => ['list', 'save', 'update', 'delete', 'role', 'repass', 'perm'].map(action => `sys:${resource}:${action}`))]
 
 	Result.data = {
 		nav: nav,
@@ -132,7 +132,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 			"component": "",
 			"type": 0,
 			"icon": "el-icon-s-operation",
-			"ordernum": 1,
+			"orderNum": 1,
 			"children": [
 				{
 					"id": 2,
@@ -146,7 +146,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 					"component": "sys/User",
 					"type": 1,
 					"icon": "el-icon-s-custom",
-					"ordernum": 1,
+					"orderNum": 1,
 					"children": [
 						{
 							"id": 9,
@@ -160,7 +160,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 							"component": null,
 							"type": 2,
 							"icon": null,
-							"ordernum": 1,
+							"orderNum": 1,
 							"children": []
 						},
 						{
@@ -175,7 +175,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 							"component": null,
 							"type": 2,
 							"icon": null,
-							"ordernum": 2,
+							"orderNum": 2,
 							"children": []
 						},
 						{
@@ -190,7 +190,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 							"component": null,
 							"type": 2,
 							"icon": null,
-							"ordernum": 3,
+							"orderNum": 3,
 							"children": []
 						},
 						{
@@ -205,7 +205,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 							"component": null,
 							"type": 2,
 							"icon": null,
-							"ordernum": 4,
+							"orderNum": 4,
 							"children": []
 						},
 						{
@@ -220,7 +220,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 							"component": null,
 							"type": 2,
 							"icon": null,
-							"ordernum": 5,
+							"orderNum": 5,
 							"children": []
 						}
 					]
@@ -237,7 +237,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 					"component": "sys/Role",
 					"type": 1,
 					"icon": "el-icon-rank",
-					"ordernum": 2,
+					"orderNum": 2,
 					"children": []
 				},
 
@@ -255,7 +255,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 			"component": null,
 			"type": 0,
 			"icon": "el-icon-s-tools",
-			"ordernum": 2,
+			"orderNum": 2,
 			"children": [
 				{
 					"id": 6,
@@ -269,7 +269,7 @@ Mock.mock('/sys/menu/list', 'get', () => {
 					"component": "sys/Dict",
 					"type": 1,
 					"icon": "el-icon-s-order",
-					"ordernum": 1,
+					"orderNum": 1,
 					"children": []
 				}
 			]
@@ -381,7 +381,6 @@ Mock.mock(RegExp('/sys/user/list*'), 'get', () => {
 				"updated": "2021-01-16T16:57:32",
 				"statu": 1,
 				"username": "admin",
-				"password": "$2a$10$R7zegeWzOXPw871CmNuJ6upC0v8D373GuLuTw8jn6NET4BkPRZfgK",
 				"avatar": "https://image-1300566513.cos.ap-guangzhou.myqcloud.com/upload/images/5a9f48118166308daba8b6da7e466aab.jpg",
 				"email": "123@qq.com",
 				"city": "广州",
@@ -415,7 +414,6 @@ Mock.mock(RegExp('/sys/user/list*'), 'get', () => {
 				"updated": "2021-01-30T08:55:57",
 				"statu": 1,
 				"username": "test",
-				"password": "$2a$10$0ilP4ZD1kLugYwLCs4pmb.ZT9cFqzOZTNaMiHxrBnVIQUGUwEvBIO",
 				"avatar": "https://image-1300566513.cos.ap-guangzhou.myqcloud.com/upload/images/5a9f48118166308daba8b6da7e466aab.jpg",
 				"email": "test@qq.com",
 				"city": null,
@@ -462,7 +460,6 @@ Mock.mock(RegExp('/sys/user/info/*'), 'get', () => {
 		"updated": "2021-01-30T08:55:57",
 		"statu": 1,
 		"username": "test",
-		"password": "$2a$10$0ilP4ZD1kLugYwLCs4pmb.ZT9cFqzOZTNaMiHxrBnVIQUGUwEvBIO",
 		"avatar": "https://image-1300566513.cos.ap-guangzhou.myqcloud.com/upload/images/5a9f48118166308daba8b6da7e466aab.jpg",
 		"email": "test@qq.com",
 		"city": null,
@@ -478,3 +475,6 @@ Mock.mock(RegExp('/login*'), 'post', () => {
     console.log("mock----------------login")
     return { code: 200, msg: '演示登录', data: { token: 'mock-demo-token' } }
  })
+Mock.mock('/sys/role/options', 'get', () => ({ code: 200, msg: '演示数据', data: [
+  { id: 3, name: '普通用户', code: 'normal', statu: 1 }, { id: 6, name: '超级管理员', code: 'admin', statu: 1 }
+] }))

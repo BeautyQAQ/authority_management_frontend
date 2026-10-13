@@ -7,7 +7,7 @@
 		</el-aside>
 		<el-container>
 			<el-header>
-				<strong>VueAdmin后台管理系统</strong>
+				<strong>流沙社区管理后台</strong>
 
 				<div class="header-avatar">
 
@@ -25,8 +25,7 @@
 						</el-dropdown-menu></template>
 					</el-dropdown>
 
-					<el-link href="https://markerhub.com" target="_blank">网站</el-link>
-					<el-link href="https://space.bilibili.com/13491144" target="_blank">B站</el-link>
+
 				</div>
 
 			</el-header>
@@ -45,7 +44,7 @@ import { ArrowDown } from '@element-plus/icons-vue'
 import { defineComponent } from 'vue'
 	import SideMenu from "./inc/SideMenu.vue";
 	import Tabs from "./inc/Tabs.vue";
-import { resetRoutes } from "@/router";
+import { clearSession } from "@/session";
 
 	export default defineComponent({
 		name: "Home",
@@ -68,18 +67,13 @@ import { resetRoutes } from "@/router";
 			getUserInfo() {
 				this.$axios.get("/sys/userInfo").then(res => {
 					this.userInfo = res.data.data
-				})
+				}).catch(() => { /* Displayed by the HTTP layer. */ })
 			},
-			logout() {
-				this.$axios.post("/logout").then(res => {
-					this.$store.commit("SET_TOKEN", "")
-                    resetRoutes()
-
-					this.$store.commit("resetState")
-
-					this.$router.push("/login")
-				})
-			}
+            async logout() {
+                try { await this.$axios.post('/logout') }
+                catch { /* Displayed by the HTTP layer. */ }
+                finally { await clearSession() }
+            }
 		}
 	})
 </script>

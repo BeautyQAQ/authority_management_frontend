@@ -3,7 +3,7 @@
 
 		<el-form :inline="true">
 			<el-form-item>
-				<el-button type="primary" @click="dialogVisible = true">新增</el-button>
+				<el-button type="primary" v-if="hasAuth('ROLE_ADMIN')" @click="openCreate">新增</el-button>
 			</el-form-item>
 		</el-form>
 
@@ -71,11 +71,11 @@
 					label="操作">
 
 				<template #default="scope">
-					<el-button link type="primary" @click="editHandle(scope.row.id)">编辑</el-button>
-					<el-divider direction="vertical"></el-divider>
+					<el-button link type="primary" v-if="hasAuth('ROLE_ADMIN')" :disabled="scope.row.id <= 16" @click="editHandle(scope.row.id)">编辑</el-button>
 
 
-						<el-popconfirm title="这是一段内容确定删除吗？" @confirm="delHandle(scope.row.id)">
+
+						<el-popconfirm v-if="hasAuth('ROLE_ADMIN') &amp;&amp; scope.row.id > 16" title="确定删除这条记录？" @confirm="delHandle(scope.row.id)">
 							<template #reference><el-button link type="primary">删除</el-button></template>
 						</el-popconfirm>
 
@@ -88,24 +88,16 @@
 
 		<!--新增对话框-->
 		<el-dialog
-				title="提示"
+				:title="editForm.id ? '编辑菜单' : '新增菜单'"
 				v-model="dialogVisible"
-				width="600px"
+				width="min(600px, 94vw)"
 				:before-close="handleClose">
 
-			<el-form :model="editForm" :rules="editFormRules" ref="editForm" label-width="100px" class="demo-editForm">
+			<el-form :model="editForm" :rules="editFormRules" ref="formRef" label-width="100px" class="demo-editForm">
 
 				<el-form-item label="上级菜单" prop="parentId">
-					<el-select v-model="editForm.parentId" placeholder="请选择上级菜单">
-						<template v-for="item in tableData" :key="item.id">
-							<el-option :label="item.name" :value="item.id"></el-option>
-							<template v-for="child in item.children" :key="child.id">
-								<el-option :label="child.name" :value="child.id">
-									<span>{{ "- " + child.name }}</span>
-								</el-option>
-							</template>
-						</template>
-					</el-select>
+					<el-tree-select v-model="editForm.parentId" :data="parentOptions" node-key="id"
+            :props="{ label: 'name', children: 'children' }" check-strictly default-expand-all />
 				</el-form-item>
 
 				<el-form-item label="菜单名称" prop="name" label-width="100px">
@@ -119,12 +111,14 @@
 				<el-form-item label="图标" prop="icon" label-width="100px">
 					<el-input v-model="editForm.icon" autocomplete="off"></el-input>
 				</el-form-item>
-				<el-form-item label="菜单URL" prop="path" label-width="100px">
-					<el-input v-model="editForm.path" autocomplete="off"></el-input>
+				<el-form-item v-if="editForm.type === 1" label="菜单URL" prop="path" label-width="100px">
+					<el-input v-model="editForm.path" placeholder="/sys/页面名称" autocomplete="off"></el-input>
 				</el-form-item>
 
-				<el-form-item label="菜单组件" prop="component" label-width="100px">
-					<el-input v-model="editForm.component" autocomplete="off"></el-input>
+				<el-form-item v-if="editForm.type === 1" label="菜单组件" prop="component" label-width="100px">
+					<el-select v-model="editForm.component" clearable placeholder="选择管理页面">
+            <el-option label="用户管理" value="sys/User" /><el-option label="角色管理" value="sys/Role" /><el-option label="菜单管理" value="sys/Menu" />
+          </el-select>
 				</el-form-item>
 
 				<el-form-item label="类型" prop="type" label-width="100px">
@@ -148,8 +142,8 @@
 
 
 				<el-form-item>
-					<el-button type="primary" @click="submitForm('editForm')">立即创建</el-button>
-					<el-button @click="resetForm('editForm')">重置</el-button>
+					<el-button type="primary" :loading="busy" @click="submitForm('editForm')">保存</el-button>
+					<el-button @click="resetForm('editForm')">取消</el-button>
 				</el-form-item>
 			</el-form>
 
@@ -160,104 +154,44 @@
 
 </template>
 
-<script lang="ts">
-import type { SysMenu, SysRole, SysUser } from '@/types'
-import type { TableInstance, TreeInstance } from 'element-plus'
-import { defineComponent } from 'vue'
-import type { FormInstance } from 'element-plus'
-	export default defineComponent({
-		name: "Menu",
-		data() {
-			return {
-				dialogVisible: false,
-				editForm: {} as Partial<SysMenu>,
-				editFormRules: {
-					parentId: [
-						{required: true, message: '请选择上级菜单', trigger: 'blur'}
-					],
-					name: [
-						{required: true, message: '请输入名称', trigger: 'blur'}
-					],
-					perms: [
-						{required: true, message: '请输入权限编码', trigger: 'blur'}
-					],
-					type: [
-						{required: true, message: '请选择状态', trigger: 'blur'}
-					],
-					orderNum: [
-						{required: true, message: '请填入排序号', trigger: 'blur'}
-					],
-					statu: [
-						{required: true, message: '请选择状态', trigger: 'blur'}
-					]
-				},
-				tableData: [] as SysMenu[]
-			}
-		},
-		created() {
-			this.getMenuTree()
-		},
-		methods: {
-			getMenuTree() {
-				this.$axios.get("/sys/menu/list").then(res => {
-					this.tableData = res.data.data
-				})
-			},
-			submitForm(formName: string) {
-				;(this.$refs[formName] as FormInstance).validate((valid) => {
-					if (valid) {
-						this.$axios.post('/sys/menu/' + (this.editForm.id?'update' : 'save'), this.editForm)
-							.then(res => {
-
-								this.$message({
-									showClose: true,
-									message: '恭喜你，操作成功',
-									type: 'success',
-									onClose:() => {
-										this.getMenuTree()
-									}
-								});
-
-								this.dialogVisible = false
-						})
-					} else {
-						console.log('error submit!!');
-						return;
-					}
-				});
-			},
-			editHandle(id: number) {
-				this.$axios.get('/sys/menu/info/' + id).then(res => {
-					this.editForm = res.data.data
-
-					this.dialogVisible = true
-				})
-			},
-			resetForm(formName: string) {
-				;(this.$refs[formName] as FormInstance).resetFields();
-				this.dialogVisible = false
-				this.editForm = {}
-			},
-			handleClose() {
-				this.resetForm('editForm')
-			},
-			delHandle(id?: number) {
-				this.$axios.post("/sys/menu/delete/" + id).then(res => {
-					this.$message({
-						showClose: true,
-						message: '恭喜你，操作成功',
-						type: 'success',
-						onClose:() => {
-							this.getMenuTree()
-						}
-					});
-
-				})
-			}
-		}
-	})
+<script setup lang="ts">
+import { ref, computed, nextTick, onMounted } from 'vue'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import request from '@/axios'
+import { hasAuth } from '@/globalFun'
+import { useOperation } from '@/composables/useOperation'
+import type { SysMenu, ApiResult } from '@/types'
+const { busy, run } = useOperation()
+const tableData = ref<SysMenu[]>([]), dialogVisible = ref(false)
+const emptyMenu = (): Partial<SysMenu> => ({ parentId: 0, name: '', perms: '', icon: '', path: '', component: '', type: 0, statu: 1, orderNum: 1 })
+const editForm = ref(emptyMenu()), formRef = ref<FormInstance>()
+function parents(rows: SysMenu[]): SysMenu[] {
+  return rows.filter(row => row.type !== 2 && row.id !== editForm.value.id).map(row => ({ ...row, children: parents(row.children || []) }))
+}
+const parentOptions = computed(() => [{ id: 0, name: '顶级目录', children: parents(tableData.value) }])
+const editFormRules: FormRules = {
+  name: [{ required: true, max: 64, message: '请输入菜单名称（最多 64 个字符）', trigger: 'blur' }],
+  perms: [{ required: true, max: 255, message: '请输入权限编码', trigger: 'blur' }],
+  parentId: [{ required: true, message: '请选择父级' }], type: [{ required: true, message: '请选择类型' }],
+  statu: [{ required: true, message: '请选择状态' }], orderNum: [{ required: true, message: '请输入排序号' }]
+}
+async function loadMenus() { tableData.value = (await request.get<ApiResult<SysMenu[]>>('/sys/menu/list')).data.data }
+function openCreate() { editForm.value = emptyMenu(); dialogVisible.value = true; nextTick(() => formRef.value?.clearValidate()) }
+function resetForm(_name?: string) { dialogVisible.value = false; editForm.value = emptyMenu(); formRef.value?.clearValidate() }
+function handleClose() { resetForm() }
+async function submitForm(_name: string) {
+  if (!await formRef.value?.validate().catch(() => false)) return
+  await run(async () => {
+    await request.post('/sys/menu/' + (editForm.value.id ? 'update' : 'save'), editForm.value)
+    ElMessage.success('菜单已保存，重新登录后刷新导航'); resetForm(); await loadMenus()
+  })
+}
+function editHandle(id: number) { return run(async () => {
+  editForm.value = (await request.get<ApiResult<SysMenu>>('/sys/menu/info/' + id)).data.data
+  dialogVisible.value = true; await nextTick(); formRef.value?.clearValidate()
+}) }
+function delHandle(id: number) { return run(async () => {
+  await request.post('/sys/menu/delete/' + id); ElMessage.success('菜单已删除'); await loadMenus()
+}) }
+onMounted(() => run(loadMenus))
 </script>
-
-<style scoped>
-
-</style>

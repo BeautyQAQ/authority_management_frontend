@@ -1,6 +1,6 @@
     <template>
 	<div style="text-align: center;">
-		<h2>你好！{{ userInfo.username }} 同学</h2>
+		<h2>{{ userInfo.username }} · 修改密码</h2>
 
 		<el-form :model="passForm" status-icon :rules="rules" ref="formRef" label-width="100px">
 			<el-form-item label="旧密码" prop="currentPass">
@@ -24,18 +24,19 @@
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import request from '@/axios'
+import { clearSession } from '@/session'
 const formRef = ref<FormInstance>()
 const userInfo = ref({ username: '' })
 const passForm = reactive({ currentPass: '', password: '', checkPass: '' })
 const rules: FormRules = {
   currentPass: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
-  password: [{ required: true, min: 6, max: 20, message: '密码长度为 6 到 20 个字符', trigger: 'blur' }],
+  password: [{ required: true, min: 8, max: 72, message: '密码至少 8 个字符，最多 72 字节', trigger: 'blur' }],
   checkPass: [{ validator: (_rule, value, callback) => callback(value === passForm.password && value ? undefined : new Error('两次输入密码不一致')), trigger: 'blur' }]
 }
 onMounted(async () => { try { userInfo.value = (await request.get('/sys/userInfo')).data.data } catch { /* Displayed by request layer. */ } })
 async function submitForm(_formName: string) {
   if (!await formRef.value?.validate().catch(() => false)) return
-  try { await request.post('/sys/user/updatePass', passForm); ElMessage.success('密码修改成功'); formRef.value?.resetFields() }
+  try { await request.post('/sys/user/updatePass', passForm); ElMessage.success('密码修改成功，请重新登录'); await clearSession() }
   catch { /* Displayed by request layer. */ }
 }
 function resetForm(_formName: string) { formRef.value?.resetFields() }
@@ -43,7 +44,7 @@ function resetForm(_formName: string) { formRef.value?.resetFields() }
 
 <style scoped>
 .el-form {
-	width: 420px;
+	width: min(420px, 100%);
 	margin: 50px auto;
 }
 </style>

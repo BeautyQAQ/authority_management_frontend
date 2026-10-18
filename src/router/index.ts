@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import Home from '../views/Home.vue'
 import request from '../axios'
 import store from '../store'
 import type { Menu } from '../store/modules/menus'
 const pages = import.meta.glob(['../views/sys/**/*.vue', '../views/community/**/*.vue'])
 const router = createRouter({ history: createWebHistory(import.meta.env.BASE_URL), routes: [
-  { path: '/', name: 'Home', component: Home, redirect: '/index', children: [
+  { path: '/', name: 'Home', component: () => import('../views/Home.vue'), redirect: '/index', children: [
     { path: '/index', name: 'Index', meta: { title: '首页' }, component: () => import('../views/Index.vue') },
     { path: '/userCenter', name: 'UserCenter', meta: { title: '个人中心' }, component: () => import('../views/UserCenter.vue') }
   ] },

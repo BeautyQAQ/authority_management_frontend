@@ -1,5 +1,5 @@
 <template>
-  <main class="login-page">
+  <main id="main-content" class="login-page" tabindex="-1">
     <section class="login-panel">
       <p class="eyebrow">流沙社区</p>
       <h1>登录管理后台</h1>
@@ -10,12 +10,13 @@
         <el-form-item label="验证码" prop="code">
           <div class="captcha-row">
             <el-input v-model="form.code" autocomplete="off" maxlength="5" />
-            <button type="button" class="captcha" aria-label="刷新验证码" @click="getCaptcha">
-              <img v-if="captchaImg" :src="captchaImg" alt="登录验证码，点击刷新" /><span v-else>刷新验证码</span>
+            <button type="button" class="captcha" aria-label="刷新验证码" :disabled="captchaBusy || busy" :aria-busy="captchaBusy" @click="getCaptcha">
+              <img v-if="captchaImg" :src="captchaImg" alt="登录验证码，点击刷新" width="120" height="40" /><span v-else>{{ captchaBusy ? '加载中…' : '刷新验证码' }}</span>
             </button>
           </div>
+          <p v-if="captchaError" class="captcha-error" role="alert">{{ captchaError }}</p>
         </el-form-item>
-        <el-button type="primary" native-type="submit" :loading="busy" class="submit">登录</el-button>
+        <el-button type="primary" native-type="submit" :loading="busy" :disabled="captchaBusy || !form.token" class="submit">登录</el-button>
       </el-form>
     </section>
   </main>
@@ -28,6 +29,7 @@ import store from '@/store'
 import router, { resetRoutes } from '@/router'
 import type { ApiResult } from '@/types'
 const formRef = ref<FormInstance>(), busy = ref(false), captchaImg = ref('')
+const captchaBusy = ref(false), captchaError = ref('')
 const form = reactive({ username: 'admin', password: '', code: '', token: '' })
 const rules: FormRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -35,14 +37,17 @@ const rules: FormRules = {
   code: [{ required: true, len: 5, message: '请输入 5 位验证码', trigger: 'blur' }]
 }
 async function getCaptcha() {
+  if (captchaBusy.value) return
+  captchaBusy.value = true; captchaError.value = ''
   form.code = ''; form.token = ''; captchaImg.value = ''
   try {
     const { data } = await request.get<ApiResult<{ token: string; captchaImg: string }>>('/captcha')
     form.token = data.data.token; captchaImg.value = data.data.captchaImg
-  } catch { /* Displayed by the HTTP layer. */ }
+  } catch { captchaError.value = '验证码加载失败，请点击右侧按钮重试。' }
+  finally { captchaBusy.value = false }
 }
 async function login() {
-  if (busy.value || !await formRef.value?.validate().catch(() => false)) return
+  if (busy.value || captchaBusy.value || !form.token || !await formRef.value?.validate().catch(() => false)) return
   busy.value = true
   try {
     const { data } = await request.post<ApiResult<{ token: string }>>('/login', new URLSearchParams(form))
@@ -60,7 +65,11 @@ h1 { font-size: 26px; margin: 8px 0; color: #243449; }
 .eyebrow { color: #11897c; font-weight: 600; margin: 0; }
 .hint { color: #68798b; margin-bottom: 28px; }
 .captcha-row { display: flex; gap: 12px; width: 100%; }
-.captcha { padding: 0; background: #f6f7f8; border: 1px solid #dcdfe6; border-radius: 4px; cursor: pointer; min-width: 120px; }
+.captcha-row :deep(.el-input) { min-width: 0; }
+.captcha-error { color: #b42318; line-height: 1.5; margin-top: 8px; }
+.captcha:disabled { cursor: wait; opacity: .7; }
+.captcha { padding: 0; background: #f6f7f8; border: 1px solid #dcdfe6; border-radius: 4px; cursor: pointer; min-width: 120px; min-height: 42px; }
 .captcha img { display: block; width: 120px; height: 40px; }
 .submit { width: 100%; margin-top: 8px; }
+@media (max-width: 480px) { .login-page { padding: 16px; }.login-panel { padding: 24px 20px; } }
 </style>

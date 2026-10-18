@@ -9,12 +9,19 @@
     </el-form>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-table v-loading="loading" :data="rows" border empty-text="暂无符合条件的社区账号">
+      <!-- @vue-generic {CommunityUser} -->
       <el-table-column prop="id" label="社区 ID" width="95" />
+      <!-- @vue-generic {CommunityUser} -->
       <el-table-column prop="username" label="社区用户名" min-width="140" />
+      <!-- @vue-generic {CommunityUser} -->
       <el-table-column prop="alias" label="昵称" min-width="120" />
+      <!-- @vue-generic {CommunityUser} -->
       <el-table-column prop="email" label="邮箱" min-width="190" />
+      <!-- @vue-generic {CommunityUser} -->
       <el-table-column label="账号状态" width="100"><template #default="{ row }"><el-tag :type="row.status ? 'success' : 'danger'">{{ row.status ? '正常' : '已禁用' }}</el-tag></template></el-table-column>
+      <!-- @vue-generic {CommunityUser} -->
       <el-table-column label="注册时间" min-width="175"><template #default="{ row }">{{ formatTime(row.createTime) }}</template></el-table-column>
+      <!-- @vue-generic {CommunityUser} -->
       <el-table-column label="操作" width="180" fixed="right"><template #default="{ row }">
         <el-button link type="primary" @click="showDetail(row.id)">详情</el-button>
         <el-button link :type="row.status ? 'danger' : 'success'" :disabled="saving || !hasAuth('community:user:status')" @click="openStatus(row)">{{ row.status ? '禁用' : '恢复' }}</el-button>

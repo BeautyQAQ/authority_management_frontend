@@ -9,13 +9,21 @@
     </el-form>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-table v-loading="loading" :data="rows" border empty-text="暂无符合条件的帖子">
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column prop="id" label="ID" width="75" />
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column prop="title" label="帖子标题" min-width="250" show-overflow-tooltip />
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column prop="username" label="社区作者" min-width="125" />
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.status==='PUBLISHED' ? 'success' : row.status==='PENDING' ? 'warning' : 'danger'">{{ postStatusLabel[row.status as PostStatus] }}</el-tag></template></el-table-column>
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column label="推荐" width="130"><template #default="{ row }"><el-tag v-if="row.top">置顶</el-tag> <el-tag v-if="row.essence" type="warning">精华</el-tag><span v-if="!row.top && !row.essence">—</span></template></el-table-column>
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column label="评论 / 点赞" width="115"><template #default="{ row }">{{ row.comments }} / {{ row.likes }}</template></el-table-column>
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column label="发布时间" min-width="175"><template #default="{ row }">{{ formatTime(row.createTime) }}</template></el-table-column>
+      <!-- @vue-generic {CommunityPost} -->
       <el-table-column label="操作" fixed="right" width="195"><template #default="{ row }">
         <el-button link type="primary" @click="open(row.id,false)">详情</el-button>
         <el-button link type="primary" :disabled="saving || !hasAuth('community:post:moderate')" @click="open(row.id,true)">审核</el-button>

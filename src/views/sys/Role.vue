@@ -33,28 +33,33 @@
 				stripe
 				@selection-change="handleSelectionChange">
 
-			<el-table-column
+			<!-- @vue-generic {SysRole} -->
+      <el-table-column
 					v-if="hasAuth('sys:role:delete')" :selectable="canSelect" type="selection"
 					width="55">
 			</el-table-column>
 
-			<el-table-column
+			<!-- @vue-generic {SysRole} -->
+      <el-table-column
 					prop="name"
 					label="名称"
 					width="120">
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysRole} -->
+      <el-table-column
 					prop="code"
 					label="唯一编码"
 					show-overflow-tooltip>
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysRole} -->
+      <el-table-column
 					prop="remark"
 					label="描述"
 					show-overflow-tooltip>
 			</el-table-column>
 
-			<el-table-column
+			<!-- @vue-generic {SysRole} -->
+      <el-table-column
 					prop="statu"
 					label="状态">
 				<template #default="scope">
@@ -63,7 +68,8 @@
 				</template>
 
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysRole} -->
+      <el-table-column
 					v-if="canOperate" prop="icon"
 					label="操作">
 

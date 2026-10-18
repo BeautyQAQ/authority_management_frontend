@@ -9,13 +9,20 @@
     </el-form>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-table v-loading="loading" :data="rows" border empty-text="暂无符合条件的评论">
+      <!-- @vue-generic {CommunityComment} -->
       <el-table-column prop="id" label="ID" width="80" />
+      <!-- @vue-generic {CommunityComment} -->
       <el-table-column prop="content" label="评论内容" min-width="260" show-overflow-tooltip />
+      <!-- @vue-generic {CommunityComment} -->
       <el-table-column prop="username" label="社区作者" min-width="130" />
+      <!-- @vue-generic {CommunityComment} -->
       <el-table-column prop="postTitle" label="所属帖子" min-width="180" show-overflow-tooltip />
-      <el-table-column label="状态" width="95"><template #default="{row}"><el-tag :type="row.visible ? 'success' : 'danger'">{{row.visible ? '可见' : '已隐藏'}}</el-tag></template></el-table-column>
-      <el-table-column label="发表时间" min-width="175"><template #default="{row}">{{formatTime(row.createdAt)}}</template></el-table-column>
-      <el-table-column label="操作" fixed="right" width="190"><template #default="{row}">
+      <!-- @vue-generic {CommunityComment} -->
+      <el-table-column label="状态" width="95"><template #default="{ row }"><el-tag :type="row.visible ? 'success' : 'danger'">{{row.visible ? '可见' : '已隐藏'}}</el-tag></template></el-table-column>
+      <!-- @vue-generic {CommunityComment} -->
+      <el-table-column label="发表时间" min-width="175"><template #default="{ row }">{{formatTime(row.createdAt)}}</template></el-table-column>
+      <!-- @vue-generic {CommunityComment} -->
+      <el-table-column label="操作" fixed="right" width="190"><template #default="{ row }">
         <el-button link type="primary" @click="open(row.id,false)">详情</el-button>
         <el-button link type="primary" :disabled="saving || !hasAuth('community:comment:moderate')" @click="open(row.id,true)">管理</el-button>
         <el-button link type="danger" :disabled="saving || !hasAuth('community:comment:delete')" @click="remove(row)">删除</el-button>

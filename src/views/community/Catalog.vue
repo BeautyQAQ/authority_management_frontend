@@ -16,10 +16,11 @@
           <span v-else>{{row[column.key] ?? '—'}}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="185" fixed="right"><template #default="{row}">
+      <!-- @vue-generic {CatalogItem} -->
+      <el-table-column label="操作" width="185" fixed="right"><template #default="{ row }">
         <el-button link type="primary" @click="open(row.id,false)">详情</el-button>
         <el-button link type="primary" :disabled="saving || !can('update')" @click="open(row.id,true)">编辑</el-button>
-        <el-button link type="danger" :disabled="saving || !can('delete') || (resource==='tags' && row.topicCount>0)" @click="remove(row)">删除</el-button>
+        <el-button link type="danger" :disabled="saving || !can('delete') || (resource==='tags' && (row.topicCount || 0)>0)" @click="remove(row)">删除</el-button>
       </template></el-table-column>
     </el-table>
     <el-pagination v-model:current-page="pageNo" v-model:page-size="size" :page-sizes="[10,20,50]" :total="total" layout="total, sizes, prev, pager, next" @current-change="load" @size-change="search" />
@@ -29,7 +30,7 @@
         <el-form v-if="!detailError" ref="form" :model="draft" :disabled="readonly || saving" label-position="top">
           <el-form-item v-for="field in config.fields" :key="field.key" :label="field.label" :prop="field.key" :rules="rulesFor(field)">
             <el-switch v-if="field.kind==='boolean'" v-model="draft[field.key]" active-text="启用" inactive-text="停用" />
-            <el-input v-else v-model="draft[field.key]" :type="field.kind==='textarea' ? 'textarea' : 'text'" :rows="4" :maxlength="field.max" show-word-limit :placeholder="field.placeholder || ''" />
+            <el-input v-else :model-value="String(draft[field.key] ?? '')" @update:model-value="draft[field.key] = $event" :type="field.kind==='textarea' ? 'textarea' : 'text'" :rows="4" :maxlength="field.max" show-word-limit :placeholder="field.placeholder || ''" />
           </el-form-item>
           <p v-if="resource==='tags' && selectedId" class="description">标签被帖子使用时无法删除。重命名会同步影响所有关联帖子。</p>
         </el-form>

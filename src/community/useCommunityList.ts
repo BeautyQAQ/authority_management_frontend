@@ -1,4 +1,4 @@
-import { onMounted, ref, shallowRef } from 'vue'
+import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import request from '@/axios'
 import type { ApiResult } from '@/types'
 import type { CommunityPage } from './types'
@@ -28,5 +28,6 @@ export function useCommunityList<T>(resource: string, filters: () => Record<stri
   }
   function search() { pageNo.value = 1; return load() }
   onMounted(load)
+  onBeforeUnmount(() => { sequence++ })
   return { rows, total, pageNo, size, query, loading, error, load, search }
 }

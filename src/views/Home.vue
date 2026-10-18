@@ -7,7 +7,7 @@
 		</el-aside>
 		<el-container class="workspace">
 			<el-header>
-				<el-button class="mobile-navigation-button" aria-label="打开管理导航" @click="mobileMenuOpen=true"><el-icon><Menu /></el-icon></el-button>
+				<el-button class="mobile-navigation-button" aria-label="打开管理导航" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen=true"><el-icon><Menu /></el-icon></el-button>
 				<strong>流沙社区管理后台</strong>
 
 				<div class="header-avatar">
@@ -15,9 +15,9 @@
 					<el-avatar size="default" :src="userInfo.avatar"></el-avatar>
 
 					<el-dropdown>
-						<span class="el-dropdown-link">
+						<button type="button" class="el-dropdown-link" aria-label="账号菜单">
 						{{userInfo.username}}<el-icon><ArrowDown /></el-icon>
-						</span>
+						</button>
 						<template #dropdown><el-dropdown-menu>
 							<el-dropdown-item>
 								<router-link :to="{name: 'UserCenter'}">个人中心</router-link>
@@ -30,7 +30,7 @@
 				</div>
 
 			</el-header>
-			<el-main>
+			<el-main id="main-content" tabindex="-1">
 				<Tabs></Tabs>
 				<div class="page-content">
 					<router-view/>
@@ -99,6 +99,11 @@ import { clearSession } from "@/session";
 
 	.el-dropdown-link {
 		cursor: pointer;
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		padding: 8px 4px;
 	}
 
 	.el-header {

@@ -35,12 +35,14 @@
 				stripe
 				@selection-change="handleSelectionChange">
 
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					v-if="hasAuth('sys:user:delete')" :selectable="canSelect" type="selection"
 					width="55">
 			</el-table-column>
 
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					label="头像"
 					width="65">
 				<template #default="scope">
@@ -48,12 +50,14 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					prop="username"
 					label="后台用户名"
 					width="120">
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					prop="code"
 					label="角色名称">
 				<template #default="scope">
@@ -61,16 +65,19 @@
 				</template>
 
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					prop="email"
 					label="邮箱">
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					prop="phone"
 					label="手机号">
 			</el-table-column>
 
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					prop="statu"
 					label="状态">
 				<template #default="scope">
@@ -79,14 +86,16 @@
 				</template>
 
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					prop="created"
 					width="200"
 					label="创建时间"
 			>
-        <template #default="scope">{{ formatDate(scope.row.created) }}</template>
+        <template #default="scope">{{ formatDate(scope.row.created ?? null) }}</template>
 			</el-table-column>
-			<el-table-column
+			<!-- @vue-generic {SysUser} -->
+      <el-table-column
 					v-if="canOperate" prop="icon"
 					width="260px"
 					label="操作">

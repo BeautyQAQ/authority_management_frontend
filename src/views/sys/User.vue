@@ -1,10 +1,12 @@
 <template>
 	<div>
+    <h2>后台账号</h2>
+    <p style="color:#606266">管理后台登录账号及角色。社区注册用户请在「社区运营 → 社区账号」中维护。</p>
 		<el-form :inline="true">
 			<el-form-item>
 				<el-input
 						v-model="searchForm.username"
-						placeholder="用户名"
+						placeholder="后台用户名"
 						clearable
 				>
 				</el-input>
@@ -48,7 +50,7 @@
 
 			<el-table-column
 					prop="username"
-					label="用户名"
+					label="后台用户名"
 					width="120">
 			</el-table-column>
 			<el-table-column
@@ -123,13 +125,13 @@
 
 		<!--新增对话框-->
 		<el-dialog
-				:title="editForm.id ? '编辑用户' : '新增用户'"
+				:title="editForm.id ? '编辑后台账号' : '新增后台账号'"
 				v-model="dialogVisible"
 				width="min(600px, 94vw)"
 				:before-close="handleClose">
 
 			<el-form :model="editForm" :rules="editFormRules" ref="formRef">
-				<el-form-item label="用户名" prop="username" label-width="100px">
+				<el-form-item label="后台用户名" prop="username" label-width="100px">
 					<el-input v-model="editForm.username" autocomplete="off"></el-input>
 				</el-form-item>
 

@@ -71,11 +71,11 @@
 					label="操作">
 
 				<template #default="scope">
-					<el-button link type="primary" v-if="hasAuth('ROLE_ADMIN')" :disabled="scope.row.id <= 16" @click="editHandle(scope.row.id)">编辑</el-button>
+					<el-button link type="primary" v-if="hasAuth('ROLE_ADMIN')" :disabled="scope.row.id <= 16 || scope.row.builtin" @click="editHandle(scope.row.id)">编辑</el-button>
 
 
 
-						<el-popconfirm v-if="hasAuth('ROLE_ADMIN') &amp;&amp; scope.row.id > 16" title="确定删除这条记录？" @confirm="delHandle(scope.row.id)">
+						<el-popconfirm v-if="hasAuth('ROLE_ADMIN') &amp;&amp; scope.row.id > 16 &amp;&amp; !scope.row.builtin" title="确定删除这条记录？" @confirm="delHandle(scope.row.id)">
 							<template #reference><el-button link type="primary">删除</el-button></template>
 						</el-popconfirm>
 
@@ -112,11 +112,12 @@
 					<el-input v-model="editForm.icon" autocomplete="off"></el-input>
 				</el-form-item>
 				<el-form-item v-if="editForm.type === 1" label="菜单URL" prop="path" label-width="100px">
-					<el-input v-model="editForm.path" placeholder="/sys/页面名称" autocomplete="off"></el-input>
+					<el-input v-model="editForm.path" placeholder="/sys/页面名称 或 /community/页面名称" autocomplete="off"></el-input>
 				</el-form-item>
 
 				<el-form-item v-if="editForm.type === 1" label="菜单组件" prop="component" label-width="100px">
 					<el-select v-model="editForm.component" clearable placeholder="选择管理页面">
+            <el-option v-for="page in communityPages" :key="page.value" :label="page.label" :value="page.value" />
             <el-option label="用户管理" value="sys/User" /><el-option label="角色管理" value="sys/Role" /><el-option label="菜单管理" value="sys/Menu" />
           </el-select>
 				</el-form-item>
@@ -161,6 +162,7 @@ import request from '@/axios'
 import { hasAuth } from '@/globalFun'
 import { useOperation } from '@/composables/useOperation'
 import type { SysMenu, ApiResult } from '@/types'
+const communityPages = [{ label: '社区账号', value: 'community/Users' }, { label: '帖子审核', value: 'community/Posts' }, { label: '评论管理', value: 'community/Comments' }, { label: '社区公告', value: 'community/Billboards' }, { label: '社区提示语', value: 'community/Tips' }, { label: '推广链接', value: 'community/Promotions' }, { label: '社区标签', value: 'community/Tags' }, { label: '运营审计', value: 'community/Audit' }]
 const { busy, run } = useOperation()
 const tableData = ref<SysMenu[]>([]), dialogVisible = ref(false)
 const emptyMenu = (): Partial<SysMenu> => ({ parentId: 0, name: '', perms: '', icon: '', path: '', component: '', type: 0, statu: 1, orderNum: 1 })

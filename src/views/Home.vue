@@ -1,12 +1,13 @@
 <template>
-	<el-container>
-		<el-aside width="200px">
+	<el-container class="admin-layout">
+		<el-aside width="200px" class="desktop-navigation">
 
 			<SideMenu></SideMenu>
 
 		</el-aside>
-		<el-container>
+		<el-container class="workspace">
 			<el-header>
+				<el-button class="mobile-navigation-button" aria-label="打开管理导航" @click="mobileMenuOpen=true"><el-icon><Menu /></el-icon></el-button>
 				<strong>流沙社区管理后台</strong>
 
 				<div class="header-avatar">
@@ -31,16 +32,19 @@
 			</el-header>
 			<el-main>
 				<Tabs></Tabs>
-				<div style="margin: 0 15px;">
+				<div class="page-content">
 					<router-view/>
 				</div>
 			</el-main>
 		</el-container>
+		<el-drawer v-model="mobileMenuOpen" title="管理导航" direction="ltr" :size="240" class="mobile-navigation">
+			<SideMenu @navigate="mobileMenuOpen=false" />
+		</el-drawer>
 	</el-container>
 </template>
 
 <script lang="ts">
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, Menu } from '@element-plus/icons-vue'
 import { defineComponent } from 'vue'
 	import SideMenu from "./inc/SideMenu.vue";
 	import Tabs from "./inc/Tabs.vue";
@@ -49,10 +53,11 @@ import { clearSession } from "@/session";
 	export default defineComponent({
 		name: "Home",
 		components: {
-			SideMenu, Tabs, ArrowDown
+			SideMenu, Tabs, ArrowDown, Menu
 		},
 		data() {
 			return {
+				mobileMenuOpen: false,
 				userInfo: {
 					id: "",
 					username: "",
@@ -86,10 +91,9 @@ import { clearSession } from "@/session";
 	}
 
 	.header-avatar {
-		float: right;
-		width: 210px;
+		margin-left: auto;
 		display: flex;
-		justify-content: space-around;
+		gap: 18px;
 		align-items: center;
 	}
 
@@ -100,19 +104,38 @@ import { clearSession } from "@/session";
 	.el-header {
 		background-color: #17B3A3;
 		color: #333;
-		text-align: center;
-		line-height: 60px;
+		display: flex;
+		gap: 16px;
+		align-items: center;
 	}
 
 	.el-aside {
 		background-color: #D3DCE6;
 		color: #333;
-		line-height: 200px;
+		overflow-y: auto;
 	}
 
 	.el-main {
 		color: #333;
 		padding: 0;
+		min-width: 0;
+	}
+	.workspace { min-width: 0; }
+	.page-content { margin: 0 15px 24px; }
+	.mobile-navigation-button { display: none; }
+	:deep(.el-pagination) { flex-wrap: wrap; gap: 8px; }
+	:deep(.el-dropdown-link) { display: inline-flex; align-items: center; max-width: 180px; overflow: hidden; }
+	@media (max-width: 760px) {
+		.desktop-navigation { display: none; }
+		.mobile-navigation-button { display: inline-flex; padding: 8px; }
+		.el-header { gap: 10px; padding: 0 12px; }
+		.el-header strong { font-size: 14px; white-space: nowrap; }
+		.header-avatar { gap: 0; }
+		.header-avatar :deep(.el-avatar) { display: none; }
+		:deep(.el-dropdown-link) { max-width: 100px; }
+		.page-content { margin: 0 12px 20px; }
+		:deep(.el-form--inline .el-form-item) { margin-right: 12px; max-width: 100%; }
+		:deep(.el-pagination) { justify-content: flex-start; }
 	}
 
 	a {

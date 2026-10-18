@@ -3,7 +3,7 @@ import Home from '../views/Home.vue'
 import request from '../axios'
 import store from '../store'
 import type { Menu } from '../store/modules/menus'
-const pages = import.meta.glob('../views/sys/**/*.vue')
+const pages = import.meta.glob(['../views/sys/**/*.vue', '../views/community/**/*.vue'])
 const router = createRouter({ history: createWebHistory(import.meta.env.BASE_URL), routes: [
   { path: '/', name: 'Home', component: Home, redirect: '/index', children: [
     { path: '/index', name: 'Index', meta: { title: '首页' }, component: () => import('../views/Index.vue') },

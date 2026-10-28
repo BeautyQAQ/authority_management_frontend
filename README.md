@@ -32,7 +32,7 @@ docker run --rm --name admin-web --network liushao \
   liushao/admin-web:local
 ```
 
-独立运行示例要求已创建 `liushao` Docker 网络，且管理后端以 `admin-api` 网络别名加入该网络。完整四服务及 MySQL/Redis 的启动方式见工作区根目录部署说明。
+独立运行示例要求已创建 `liushao` Docker 网络，且管理后端以 `admin-api` 网络别名加入该网络。完整四服务及 MySQL/Redis 的启动方式见 [共享部署说明](../liushao_community_backend/deploy/README.md)。
 
 镜像使用 Node.js 22 执行 `npm ci --include=dev` 和严格类型检查构建，运行阶段使用非 root 的 `nginxinc/nginx-unprivileged:stable-alpine`，监听 `8080`。构建上下文排除本地 `.env*`、`.npmrc`、依赖和已有产物；镜像固定浏览器 API 地址为同源 `/api`，关闭 Mock。Vite 环境变量会写入前端产物，请勿用它们存储密钥。
 
@@ -42,7 +42,7 @@ Nginx 使用 Docker 自定义网络的 DNS `127.0.0.11`，解析缓存有效期�
 
 `GET /healthz` 返回 `200 ok`，用于镜像健康检查，仅表示静态服务可用；后端有独立健康检查。Nginx 支持 history 页面刷新，入口 HTML 每次重新验证缓存，带哈希的 `/assets/` 文件缓存一年；缺失的 `/assets/` 资源返回 404，API 错误保持原状态码。
 
-入口会覆盖客户端提供的转发头，后端依据真实连接来源执行限流。`X-Forwarded-Host` 保留请求 Host，`X-Forwarded-Port` 从 Host 中提取对外端口（兼容 `[::1]:端口`；当前 HTTP 入口不带端口时为 80），避免容器端口和对外端口不一致导致同源请求被拒绝；客户端伪造的转发端口会被覆盖。若外层增加 TLS 反向代理，需要按实际可信代理地址配置 Nginx 的真实 IP、协议与对外端口处理，不能直接信任任意来源的 `X-Forwarded-*`。线上 HTTPS、备份和数据库迁移要求见根目录部署说明。
+入口会覆盖客户端提供的转发头，后端依据真实连接来源执行限流。`X-Forwarded-Host` 保留请求 Host，`X-Forwarded-Port` 从 Host 中提取对外端口（兼容 `[::1]:端口`；当前 HTTP 入口不带端口时为 80），避免容器端口和对外端口不一致导致同源请求被拒绝；客户端伪造的转发端口会被覆盖。若外层增加 TLS 反向代理，需要按实际可信代理地址配置 Nginx 的真实 IP、协议与对外端口处理，不能直接信任任意来源的 `X-Forwarded-*`。线上 HTTPS、备份和数据库迁移要求见 [共享部署说明](../liushao_community_backend/deploy/README.md)。
 
 `.github/workflows/ci.yml` 在 push、pull request 或手动触发时安装锁定依赖、执行严格类型检查及生产构建，再构建容器镜像。CI 不需要业务密钥，不推送镜像，也不部署。
 
@@ -61,7 +61,7 @@ Nginx 使用 Docker 自定义网络的 DNS `127.0.0.11`，解析缓存有效期�
 
 默认 `VITE_ENABLE_MOCK=false`，使用真实后端。开发时可显式开启 Mock，使用 admin、任意非空密码和五位验证码预览旧演示数据。Mock 数据不持久化，不用于业务验收，生产包不加载 Mock。
 
-2026-10-13 管理端已连接 NAS MySQL/Redis 完成真实接口联调。完整阶段记录见工作区根目录 `MODERNIZATION.md`。
+2026-10-13 管理端已连接 NAS MySQL/Redis 完成真实接口联调。完整阶段记录见 [历史实施记录](../liushao_community_backend/docs/archive/WORKSPACE_HISTORY.md)。
 
 ## 社区运营
 
@@ -79,4 +79,6 @@ Element Plus 的模板组件与 `v-loading` 通过 `unplugin-vue-components` 按
 
 `src/components.d.ts` 是构建插件生成的组件类型声明，需要随代码保留，保证干净检出后首次 `npm run build` 也进行完整模板类型检查。表格列通过 `@vue-generic` 关联业务行类型。
 
-页面提供跳到主要内容的键盘入口、可见焦点和手机弹窗宽度限制；验证码支持加载/失败提示、重试与防重复请求。性能对比、测量条件和浏览器验收范围见工作区根目录 `FRONTEND_PERFORMANCE.md`。
+页面提供跳到主要内容的键盘入口、可见焦点和手机弹窗宽度限制；验证码支持加载/失败提示、重试与防重复请求。性能对比、测量条件和浏览器验收范围见 [性能记录](../liushao_community_frontend/docs/FRONTEND_PERFORMANCE.md)。
+
+社区运营页面、权限和审核流程见 [运营指南](docs/COMMUNITY_OPERATIONS.md)。真实接口浏览器回归由 [社区前端测试包](../liushao_community_frontend/e2e/README.md) 统一执行。

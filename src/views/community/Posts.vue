@@ -1,7 +1,7 @@
 <template>
   <section class="operations">
     <h2>帖子审核</h2>
-    <p class="description">审核状态、置顶和加精会同步到社区。每次变更都会记录后台操作者及原因，并通知作者。</p>
+    <p class="description">新帖及作者修改后的内容需要审核后公开。每次变更都会记录后台操作者及原因，并通知作者。</p>
     <el-form inline @submit.prevent="search">
       <el-form-item><el-input v-model="query" placeholder="标题或社区作者" maxlength="100" clearable @keyup.enter="search" /></el-form-item>
       <el-form-item><el-select v-model="status" clearable placeholder="全部状态" style="width:150px"><el-option v-for="(label,value) in postStatusLabel" :key="value" :label="label" :value="value" /></el-select></el-form-item>
@@ -50,9 +50,10 @@
             <el-form-item label="操作原因" prop="reason" :rules="[{ required:true, whitespace:true, message:'请填写审核原因', trigger:'blur' }]"><el-input v-model="moderation.reason" type="textarea" :rows="3" maxlength="255" show-word-limit /></el-form-item>
           </el-form>
           <el-alert v-if="saveError" :title="saveError" type="error" :closable="false" />
+          <el-button v-if="reviewConflict" @click="open(detail.id,true)">重新载入最新内容</el-button>
         </template>
       </div>
-      <template #footer><el-button :disabled="saving" @click="visible=false">{{ editing ? '取消' : '关闭' }}</el-button><el-button v-if="editing" type="primary" :disabled="!detail || detailLoading || !hasAuth('community:post:moderate')" :loading="saving" @click="save">确认审核</el-button></template>
+      <template #footer><el-button :disabled="saving" @click="visible=false">{{ editing ? '取消' : '关闭' }}</el-button><el-button v-if="editing" type="primary" :disabled="!detail || detailLoading || reviewConflict || !hasAuth('community:post:moderate')" :loading="saving" @click="save">确认审核</el-button></template>
     </el-dialog>
   </section>
 </template>
@@ -67,18 +68,19 @@ import { useCommunityList, messageOf } from '@/community/useCommunityList'
 const status=ref<PostStatus|''>('')
 const {rows,total,pageNo,size,query,loading,error,load,search}=useCommunityList<CommunityPost>('posts',()=>({status:status.value || undefined}))
 const visible=ref(false), editing=ref(false), detailLoading=ref(false), detailError=ref(''), detail=ref<CommunityPost>(), saving=ref(false), saveError=ref(''), form=ref<FormInstance>()
+const reviewConflict=ref(false)
 const moderation=reactive({status:'PUBLISHED' as PostStatus,top:false,essence:false,reason:''})
 async function open(id:number, edit:boolean){
-  detail.value=undefined; detailError.value=''; saveError.value=''; editing.value=edit; visible.value=true; detailLoading.value=true
+  detail.value=undefined; detailError.value=''; saveError.value=''; reviewConflict.value=false; editing.value=edit; visible.value=true; detailLoading.value=true
   try { detail.value=(await request.get<ApiResult<CommunityPost>>(`/community/posts/${id}`)).data.data
     Object.assign(moderation,{status:detail.value.status,top:detail.value.top,essence:detail.value.essence,reason:''}); await nextTick(); form.value?.clearValidate()
   }catch(e){detailError.value=messageOf(e)}finally{detailLoading.value=false}
 }
 async function save(){
-  if(saving.value || !detail.value || !await form.value?.validate().catch(()=>false))return
+  if(saving.value || reviewConflict.value || !detail.value || !await form.value?.validate().catch(()=>false))return
   saving.value=true; saveError.value=''
-  try{await request.put(`/community/posts/${detail.value.id}/moderation`,{...moderation,reason:moderation.reason.trim()});visible.value=false;ElMessage.success('审核已保存，作者将收到通知');await load()}
-  catch(e){saveError.value=messageOf(e)}finally{saving.value=false}
+  try{await request.put(`/community/posts/${detail.value.id}/moderation`,{...moderation,reason:moderation.reason.trim(),version:detail.value.version});visible.value=false;ElMessage.success('审核已保存，作者将收到通知');await load()}
+  catch(e){saveError.value=messageOf(e);reviewConflict.value=(e as {response?:{status?:number}}).response?.status===409}finally{saving.value=false}
 }
 async function remove(post:CommunityPost){
   const result=await ElMessageBox.prompt(`将永久删除「${post.title}」及其评论、点赞和收藏。请填写删除原因。`,'删除帖子',{
